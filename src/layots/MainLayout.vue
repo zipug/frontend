@@ -1,119 +1,111 @@
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import { PANEL_ITEMS } from '@/constants/app'
+import { AVATAR_ITEMS } from '@/constants/avatar'
+import { useAuthStore } from '@/stores/auth'
+import { useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
+import { useToast } from 'primevue'
 
-const items = ref([
-  {
-    separator: true,
-  },
-  {
-    label: 'Documents',
-    items: [
-      {
-        label: 'New',
-        icon: 'pi pi-plus',
-        shortcut: '⌘+N',
-      },
-      {
-        label: 'Search',
-        icon: 'pi pi-search',
-        shortcut: '⌘+S',
-      },
-    ],
-  },
-  {
-    label: 'Profile',
-    items: [
-      {
-        label: 'Settings',
-        icon: 'pi pi-cog',
-        shortcut: '⌘+O',
-      },
-      {
-        label: 'Messages',
-        icon: 'pi pi-inbox',
-        badge: 2,
-      },
-      {
-        label: 'Logout',
-        icon: 'pi pi-sign-out',
-        shortcut: '⌘+Q',
-      },
-    ],
-  },
-  {
-    separator: true,
-  },
-])
+const authStore = useAuthStore()
+const route = useRoute()
+const router = useRouter()
+const toast = useToast()
+const avatar_menu = ref()
+const items = ref(PANEL_ITEMS)
+const avatar_items = ref(AVATAR_ITEMS)
+
+const initials = computed(() => authStore.getInitials)
+const logoutAction = () => {
+  authStore.logout()
+  toast.add({ severity: 'warn', summary: 'Внимание', detail: 'Вы вышли из системы', life: 3000 })
+  router.push('/login')
+}
 </script>
 
 <template>
   <main class="bg-zinc-950 px-6 py-12 md:px-12 lg:px-20">
-    <button
-      aria-controls="default-sidebar"
-      class="inline-flex items-center p-2 mt-2 ms-3 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
-      data-drawer-target="default-sidebar"
-      data-drawer-toggle="default-sidebar"
-      type="button"
+    <Menubar
+      :model="items.filter((el: any) => authStore.can(el?.permission))"
+      v-if="route.path !== '/login' && route.path !== '/register'"
     >
-      <span class="sr-only">Open sidebar</span>
-      <svg
-        aria-hidden="true"
-        class="w-6 h-6"
-        fill="currentColor"
-        viewBox="0 0 20 20"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          clip-rule="evenodd"
-          d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"
-          fill-rule="evenodd"
-        ></path>
-      </svg>
-    </button>
-
-    <aside
-      id="default-sidebar"
-      aria-label="Sidebar"
-      class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0"
-    >
-      <Menu :model="items" class="w-full h-full px-3 py-4 overflow-y-auto bg-zinc-50">
-        <template #start>
-          <span class="inline-flex items-center gap-1 px-2 py-2">
-            <span class="text-xl font-semibold">PRIME<span class="text-primary">APP</span></span>
-          </span>
-        </template>
-        <template #item="{ item, props }">
-          <a v-ripple class="flex items-center" v-bind="props.action">
-            <span :class="item.icon" />
-            <span>{{ item.label }}</span>
-            <Badge v-if="item.badge" :value="item.badge" class="ml-auto" />
-            <span
-              v-if="item.shortcut"
-              class="ml-auto border border-surface rounded bg-emphasis text-muted-color text-xs p-1"
-              >{{ item.shortcut }}</span
-            >
-          </a>
-        </template>
-        <template #end>
-          <button
-            v-ripple
-            class="relative overflow-hidden w-full border-0 bg-transparent flex items-start p-2 pl-4 hover:bg-surface-100 dark:hover:bg-surface-800 rounded-none cursor-pointer transition-colors duration-200"
-          >
-            <Avatar
-              class="mr-2"
-              image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png"
-              shape="circle"
-            />
-            <span class="inline-flex flex-col items-start">
-              <span class="font-bold">Amy Elsner</span>
-              <span class="text-sm">Admin</span>
-            </span>
-          </button>
-        </template>
-      </Menu>
-    </aside>
-
-    <div class="p-4 sm:ml-64">
+      <template #start>
+        <svg
+          width="36"
+          height="36"
+          viewBox="0 0 165 180"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M98.0164 149.437C87.5088 144.349 76.9929 144.349 66.4853 149.437C55.9694 154.525 55.9694 162.061 66.4853 172.03C76.9929 182.006 87.5088 182.006 98.0164 172.03C108.524 162.06 108.524 154.525 98.0164 149.437ZM61.6571 143.373C51.1494 148.461 45.5306 145.31 44.8078 133.914C44.0851 122.511 47.3402 117.031 54.5711 117.467C61.801 117.896 67.4209 121.054 71.4193 126.926C75.4188 132.798 72.1647 138.285 61.6571 143.373ZM119.694 133.914C118.972 145.31 113.352 148.461 102.845 143.373C92.337 138.285 89.0829 132.798 93.0824 126.926C97.0818 121.054 102.701 117.896 109.932 117.467C117.163 117.031 120.417 122.511 119.694 133.914ZM143.272 106.315C133.486 112.623 128.233 121.475 127.511 132.879C126.788 144.275 133.495 148.039 147.629 144.171C161.764 140.304 167.017 131.451 163.39 117.615C159.764 103.771 153.065 100.007 143.272 106.315ZM36.9919 132.879C36.2691 121.475 31.0153 112.623 21.2304 106.315C11.4363 100.007 4.72969 103.771 1.11062 117.615C-2.51565 131.452 2.73817 140.304 16.8721 144.171C31.0081 148.039 37.7136 144.275 36.9919 132.879ZM88.2542 114.465C84.3168 113.474 80.1849 113.474 76.2475 114.465C72.2408 115.455 72.2408 118.895 76.2475 124.766C80.247 130.638 84.2547 130.638 88.2542 124.766C92.2537 118.894 92.2537 115.456 88.2542 114.465ZM63.2466 107.165C62.128 103.298 60.1282 99.9327 57.2474 97.0557C54.3583 94.1787 51.3016 95.8948 48.0773 102.203C44.8459 108.511 46.8456 111.883 54.0766 112.32C61.3075 112.749 64.3642 111.033 63.2466 107.165ZM107.254 97.0557C104.373 99.9327 102.374 103.298 101.256 107.166C100.137 111.033 103.194 112.749 110.425 112.32C117.656 111.884 119.656 108.511 116.424 102.203C113.193 95.8948 110.136 94.1787 107.254 97.0557ZM140.292 80.2907C150.078 86.5987 150.078 92.9068 140.292 99.2158C130.499 105.524 123.989 105.524 120.766 99.2158C117.535 92.9068 117.535 86.5987 120.766 80.2907C123.989 73.9827 130.499 73.9827 140.292 80.2907ZM24.21 99.2158C14.4241 92.9068 14.4241 86.5987 24.21 80.2907C33.9959 73.9827 40.504 73.9827 43.7355 80.2907C46.9669 86.5987 46.9669 92.9068 43.7355 99.2158C40.504 105.524 33.9959 105.524 24.211 99.2158H24.21ZM101.256 72.3408C102.341 76.1534 104.405 79.6349 107.254 82.4577C110.136 85.3277 113.193 83.6107 116.425 77.3027C119.656 70.9947 117.656 67.6227 110.425 67.1927C103.194 66.7577 100.137 68.4728 101.256 72.3408ZM57.2474 82.4577C60.0971 79.635 62.1616 76.1535 63.2466 72.3408C64.3642 68.4728 61.3075 66.7577 54.0755 67.1937C46.8456 67.6227 44.8459 70.9947 48.0773 77.3037C51.3016 83.6107 54.3573 85.3267 57.2474 82.4577ZM127.511 46.6348C128.233 58.0308 133.486 66.8828 143.272 73.1908C153.065 79.4998 159.764 75.7348 163.391 61.8988C167.017 48.0548 161.764 39.2028 147.63 35.3348C133.495 31.4668 126.788 35.2308 127.511 46.6348ZM21.2294 73.1908C31.0153 66.8828 36.2691 58.0308 36.9908 46.6348C37.7136 35.2308 31.007 31.4668 16.8731 35.3348C2.73817 39.2028 -2.51565 48.0548 1.11164 61.8988C4.73072 75.7348 11.4363 79.4988 21.2294 73.1908ZM76.2475 65.0407C80.247 66.0327 84.2547 66.0327 88.2542 65.0407C92.2537 64.0507 92.2537 60.6187 88.2542 54.7407C84.2547 48.8677 80.247 48.8677 76.2475 54.7407C72.2408 60.6187 72.2408 64.0507 76.2475 65.0407ZM102.846 36.1338C113.353 31.0458 118.972 34.2038 119.694 45.5998C120.417 56.9958 117.163 62.4827 109.932 62.0467C102.701 61.6097 97.0818 58.4597 93.0824 52.5807C89.0829 46.7087 92.338 41.2288 102.846 36.1338ZM44.8078 45.5998C45.5306 34.2038 51.1494 31.0458 61.6571 36.1338C72.1647 41.2288 75.4188 46.7087 71.4193 52.5807C67.4198 58.4607 61.801 61.6107 54.5711 62.0467C47.3402 62.4827 44.0851 56.9958 44.8078 45.5998ZM66.4853 30.0698C76.9929 35.1648 87.5088 35.1648 98.0164 30.0698C108.524 24.9818 108.524 17.4527 98.0164 7.47675C87.5088 -2.49225 76.9929 -2.49225 66.4853 7.47675C55.9694 17.4527 55.9694 24.9818 66.4853 30.0698Z"
+            fill="white"
+          />
+        </svg>
+      </template>
+      <template #item="{ item, props }">
+        <router-link
+          v-ripple
+          class="flex items-center"
+          v-bind="props.action"
+          style="font-size: 1rem; line-height: 1"
+          :to="item.route"
+          v-if="item?.route"
+        >
+          <span :class="item.icon" style="color: var(--p-menubar-item-icon-color)" />
+          <span>{{ item.label }}</span>
+        </router-link>
+        <a
+          v-ripple
+          class="flex items-center"
+          v-bind="props.action"
+          style="font-size: 1rem; line-height: 1"
+          v-else
+        >
+          <span :class="item.icon" style="color: var(--p-menubar-item-icon-color)" />
+          <span>{{ item.label }}</span>
+        </a>
+      </template>
+      <template #end>
+        <div class="flex items-center gap-2">
+          <Avatar
+            :label="initials"
+            shape="circle"
+            @click="(evt: any) => avatar_menu.toggle(evt)"
+            aria-haspopup="true"
+            aria-controls="overlay_tmenu"
+            style="background-color: #ece9fc; color: #2a1261"
+          />
+          <TieredMenu ref="avatar_menu" id="overlay_tmenu" :model="avatar_items" popup>
+            <template #item="{ item, props }">
+              <router-link
+                v-ripple
+                class="flex items-center gap-0.5"
+                style="font-size: 1rem; line-height: 1"
+                v-bind="props.action"
+                :to="item.route"
+                v-if="item?.route && authStore.can(item?.permission)"
+              >
+                <span :class="item.icon" style="color: var(--p-menubar-item-icon-color)" />
+                <span>{{ item.label }}</span>
+              </router-link>
+              <a
+                v-ripple
+                class="flex items-center gap-0.5"
+                style="font-size: 1rem; line-height: 1"
+                v-bind="props.action"
+                v-else
+                @click="item?.action === 'logout' && logoutAction()"
+              >
+                <span :class="item.icon" style="color: var(--p-menubar-item-icon-color)" />
+                <span>{{ item.label }}</span>
+              </a>
+            </template>
+          </TieredMenu>
+        </div>
+      </template>
+    </Menubar>
+    <div class="mt-8">
       <slot />
     </div>
   </main>

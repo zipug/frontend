@@ -1,27 +1,62 @@
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import * as yup from 'yup'
 import * as yr from '@primevue/forms/resolvers/yup'
 import type { FormFieldState } from '@primevue/forms'
+import router from '@/router'
+import { useRoute } from 'vue-router'
 
-const authSchema = yup.object().shape({
-  email: yup.string().lowercase().trim().email().required('Email is required'),
+const route = useRoute()
+
+interface AuthFormProps {
+  type: 'login' | 'register'
+}
+
+const formType = computed<typeof props.type>(() => {
+  if (route.path === '/login') {
+    return 'login'
+  } else if (route.path === '/register') {
+    return 'register'
+  } else {
+    return props.type
+  }
+})
+
+const props = defineProps<AuthFormProps>()
+const emits = defineEmits(['login', 'register'])
+
+const loginSchema = yup.object().shape({
+  name: yup.string().optional(),
+  lastname: yup.string().optional(),
+  email: yup.string().lowercase().trim().email().required('Email обязателен'),
+  password: yup.string().lowercase().trim().required('Пароль обязателен'),
+  repeat_password: yup.string().optional(),
+})
+
+const registerSchema = yup.object().shape({
+  name: yup.string().trim().required('Имя обязательно'),
+  lastname: yup.string().trim().required('Фамилия обязательна'),
+  email: yup.string().lowercase().trim().email().required('Email обязателен'),
   password: yup
     .string()
     .lowercase()
     .trim()
-    .min(6, 'Password must be at least 10 characters')
-    .required('Password is required'),
+    .min(6, 'Минимальная длина пароля 10 символов')
+    .required('Пароль обязателен'),
   repeat_password: yup
     .string()
     .lowercase()
     .trim()
-    .equals([yup.ref('password')], 'Passwords must match')
-    .required('Password is required'),
-  remember: yup.boolean().default(false),
+    .equals([yup.ref('password')], 'Пароли не совпадают')
+    .required('Пароли не совпадают'),
 })
 
-const resolver = ref(yr.yupResolver(authSchema))
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const authSchema = formType.value === 'login' ? loginSchema : registerSchema
+
+const resolver = ref(
+  formType.value === 'login' ? yr.yupResolver(loginSchema) : yr.yupResolver(registerSchema),
+)
 
 type Auth = yup.InferType<typeof authSchema>
 
@@ -30,20 +65,21 @@ type AuthFormSubmit = {
   values: Auth
   states: Record<string, FormFieldState>
   valid: boolean
-  errors: any
+  errors: never
   reset: () => void
 }
 
 const auth = ref<Auth>({
+  name: '',
+  lastname: '',
   email: '',
   password: '',
   repeat_password: '',
-  remember: false,
 })
 
 const onFormSubmit = (form: AuthFormSubmit) => {
   if (form.valid) {
-    console.log('Form submitted', form.values)
+    emits(formType.value, form.values)
   }
 }
 </script>
@@ -64,11 +100,28 @@ const onFormSubmit = (form: AuthFormSubmit) => {
           fill-rule="evenodd"
         />
       </svg>
-      <div class="text-zinc-50 text-3xl font-medium mb-4">Welcome Back</div>
-      <span class="text-surface-600 dark:text-surface-200 font-medium leading-normal"
-        >Don't have an account?</span
-      >
-      <a class="font-medium no-underline ml-2 text-primary cursor-pointer">Create today!</a>
+      <div v-if="formType === 'register'">
+        <div class="text-zinc-50 text-3xl font-medium mb-4">Создать аккаунт</div>
+        <span class="text-surface-600 dark:text-surface-200 font-medium leading-normal"
+          >Уже есть аккаунт?</span
+        >
+        <a
+          class="font-medium no-underline ml-2 text-primary cursor-pointer text-violet-400"
+          @click.stop="router.push('login')"
+          >Войдите прямо сейчас!</a
+        >
+      </div>
+      <div v-else>
+        <div class="text-zinc-50 text-3xl font-medium mb-4">Войти в аккаунт</div>
+        <span class="text-surface-600 dark:text-surface-200 font-medium leading-normal"
+          >Нет аккаунта?</span
+        >
+        <a
+          class="font-medium no-underline ml-2 text-primary cursor-pointer text-violet-400"
+          @click.stop="router.push('register')"
+          >Создайте прямо сейчас!</a
+        >
+      </div>
     </div>
     <div>
       <Form
@@ -76,89 +129,168 @@ const onFormSubmit = (form: AuthFormSubmit) => {
         v-model="auth"
         :resolver="resolver"
         class="grid gap-4 w-full"
-        @submit="onFormSubmit"
+        @submit="(val: any) => onFormSubmit(val)"
       >
         <div class="flex flex-col justify-center items-center gap-4">
-          <div class="w-full flex flex-col gap-1">
-            <InputText
-              v-model="auth.email"
-              fluid
-              name="email"
-              placeholder="Email address"
-              type="text"
-            />
-            <Message v-if="$form.email?.invalid" severity="error" size="small" variant="simple">
-              {{ $form.email?.error?.message }}
-            </Message>
+          <div v-if="formType === 'register'" class="w-full flex flex-row gap-4">
+            <IftaLabel class="w-full">
+              <InputGroup>
+                <InputText
+                  class="w-full"
+                  v-model="auth.name"
+                  fluid
+                  name="name"
+                  id="name"
+                  type="text"
+                />
+                <InputGroupAddon>
+                  <i class="pi pi-user"></i>
+                </InputGroupAddon>
+              </InputGroup>
+              <Message v-if="$form.name?.invalid" severity="error" size="small" variant="simple">
+                {{ $form.name?.error?.message }}
+              </Message>
+              <label for="name" class="block text-sm font-medium text-gray-700">Имя</label>
+            </IftaLabel>
+            <IftaLabel class="w-full">
+              <InputGroup>
+                <InputText
+                  class="w-full"
+                  v-model="auth.lastname"
+                  fluid
+                  name="lastname"
+                  id="lastname"
+                  type="text"
+                />
+                <InputGroupAddon>
+                  <i class="pi pi-user"></i>
+                </InputGroupAddon>
+              </InputGroup>
+              <Message
+                v-if="$form.lastname?.invalid"
+                severity="error"
+                size="small"
+                variant="simple"
+              >
+                {{ $form.lastname?.error?.message }}
+              </Message>
+              <label for="lastname" class="block text-sm font-medium text-gray-700">Фамилия</label>
+            </IftaLabel>
           </div>
           <div class="w-full flex flex-col gap-1">
-            <Password
-              v-model="auth.password"
-              fluid
-              name="password"
-              placeholder="Password"
-              toggle-mask
-              type="password"
-            >
-              <template #header>
-                <div class="font-semibold text-xm mb-4">Pick a password</div>
-              </template>
-              <template #footer>
-                <Divider />
-                <ul class="pl-2 ml-2 my-0 leading-normal">
-                  <li class="mb-1">At least 10 characters</li>
-                  <li class="mb-1">At least 1 number</li>
-                  <li class="mb-1">At least 1 special character</li>
-                </ul>
-              </template>
-            </Password>
-            <Message v-if="$form.password?.invalid" severity="error" size="small" variant="simple">
-              {{ $form.password?.error?.message }}
-            </Message>
+            <IftaLabel class="w-full">
+              <InputGroup>
+                <InputText
+                  class="w-full"
+                  id="email"
+                  v-model="auth.email"
+                  fluid
+                  name="email"
+                  type="text"
+                />
+                <InputGroupAddon>
+                  <i class="pi pi-at"></i>
+                </InputGroupAddon>
+              </InputGroup>
+              <Message v-if="$form.email?.invalid" severity="error" size="small" variant="simple">
+                {{ $form.email?.error?.message }}
+              </Message>
+              <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+            </IftaLabel>
           </div>
           <div class="w-full flex flex-col gap-1">
-            <Password
-              v-model="auth.repeat_password"
-              fluid
-              name="repeat_password"
-              placeholder="Repeat password"
-              toggle-mask
-              type="password"
-            >
-              <template #header>
-                <div class="font-semibold text-xm mb-4">Pick a password</div>
-              </template>
-              <template #footer>
-                <Divider />
-                <ul class="pl-2 ml-2 my-0 leading-normal">
-                  <li class="mb-1">At least 10 characters</li>
-                  <li class="mb-1">At least 1 number</li>
-                  <li class="mb-1">At least 1 special character</li>
-                </ul>
-              </template>
-            </Password>
-            <Message
-              v-if="$form.repeat_password?.invalid"
-              severity="error"
-              size="small"
-              variant="simple"
-            >
-              {{ $form.repeat_password?.error?.message }}
-            </Message>
+            <IftaLabel>
+              <InputGroup>
+                <Password
+                  v-model="auth.password"
+                  :feedback="formType === 'register'"
+                  fluid
+                  id="password"
+                  name="password"
+                  toggle-mask
+                  type="password"
+                >
+                  <template #header>
+                    <div v-if="formType === 'register'" class="font-semibold text-xm mb-4">
+                      Введите пароль
+                    </div>
+                  </template>
+                  <template #footer>
+                    <div v-if="formType === 'register'">
+                      <Divider />
+                      <ul class="pl-2 ml-2 my-0 leading-normal">
+                        <li class="mb-1">Длина не менее 10 символов</li>
+                        <li class="mb-1">Пароль должен содержать как минимум 1 цифру</li>
+                        <li class="mb-1">
+                          Пароль должен содержать как минимум 1 специальный символ
+                        </li>
+                      </ul>
+                    </div>
+                  </template>
+                </Password>
+                <InputGroupAddon>
+                  <i class="pi pi-lock"></i>
+                </InputGroupAddon>
+              </InputGroup>
+              <Message
+                v-if="$form.password?.invalid"
+                severity="error"
+                size="small"
+                variant="simple"
+              >
+                {{ $form.password?.error?.message }}
+              </Message>
+              <label for="password" class="block text-sm font-medium text-gray-700">Пароль</label>
+            </IftaLabel>
           </div>
-          <div class="flex items-center gap-2">
-            <Checkbox
-              v-model="auth.remember"
-              binary
-              input-id="remember"
-              name="remember"
-              value="Remember me"
-            />
-            <label for="remember">Remember me</label>
+          <div v-if="formType === 'register'" class="w-full flex flex-col gap-1">
+            <IftaLabel>
+              <InputGroup>
+                <Password
+                  v-model="auth.repeat_password"
+                  fluid
+                  name="repeat_password"
+                  id="repeat_password"
+                  toggle-mask
+                  type="password"
+                >
+                  <template #header>
+                    <div class="font-semibold text-xm mb-4">Введите пароль</div>
+                  </template>
+                  <template #footer>
+                    <Divider />
+                    <ul class="pl-2 ml-2 my-0 leading-normal">
+                      <li class="mb-1">Длина не менее 10 символов</li>
+                      <li class="mb-1">Пароль должен содержать как минимум 1 цифру</li>
+                      <li class="mb-1">Пароль должен содержать как минимум 1 специальный символ</li>
+                    </ul>
+                  </template>
+                </Password>
+                <InputGroupAddon>
+                  <i class="pi pi-lock"></i>
+                </InputGroupAddon>
+              </InputGroup>
+              <Message
+                v-if="$form.repeat_password?.invalid"
+                severity="error"
+                size="small"
+                variant="simple"
+              >
+                {{ $form.repeat_password?.error?.message }}
+              </Message>
+              <label for="password" class="block text-sm font-medium text-gray-700"
+                >Повторите пароль</label
+              >
+            </IftaLabel>
           </div>
-          <Button class="w-full" label="Submit" severity="success" type="submit" />
+          <Button
+            class="w-full"
+            :label="formType === 'login' ? 'Войти' : 'Зарегестировать'"
+            severity="success"
+            type="submit"
+          />
         </div>
-        <Fieldset class="h-80 overflow-auto" legend="Form States">
+        <Fieldset v-if="false" class="h-80 overflow-auto" legend="Form States">
           <pre class="whitespace-pre-wrap">{{ $form }}</pre>
         </Fieldset>
       </Form>

@@ -1,14 +1,12 @@
 <script lang="ts" setup>
-import { VueQueryDevtools } from '@tanstack/vue-query-devtools'
-import AuthView from '@/views/AuthView.vue'
 import MainLayout from '@/layots/MainLayout.vue'
 </script>
 
 <template>
   <MainLayout>
-    <AuthView />
+    <router-view :key="$route.fullPath" />
   </MainLayout>
-  <VueQueryDevtools />
+  <Toast />
 </template>
 
 <style src="./assets/base.css"></style>

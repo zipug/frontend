@@ -1,0 +1,5 @@
+export const BASE_URL = 'http://localhost:4400/api/v1/'
+export const USERS_PATH = 'users/'
+export const ROLES_PATH = 'roles/'
+export const REPORTS_PATH = 'reports/'
+export const GENERATED_REPORTS_PATH = 'generated-reports/'
