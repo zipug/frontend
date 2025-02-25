@@ -4,6 +4,8 @@ import { getClaims } from '@/utils/jwt'
 import type { User } from '@/models/user'
 import { useRouter } from 'vue-router'
 import { userMe } from '@/api/users/me'
+import { userSendCode } from '@/api/users/send_code'
+import { userVerifyCode } from '@/api/users/verify_code'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(JSON.parse(localStorage.getItem('user') || '{}') as User)
@@ -71,7 +73,45 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem('user', JSON.stringify(user.value))
   }
 
-  return { user, isAuth, getUserData, getInitials, login, logout, setUser, can }
+  async function verifyEmail(): Promise<boolean> {
+    if (!!user.value?.email) {
+      const resp = await userSendCode({ email: user.value?.email })
+      if (resp.status === 'success' && resp.data.length > 0) {
+        if (resp.data[0] === 'Your verification code has been sent') return true
+        return false
+      }
+      return false
+    }
+    return false
+  }
+
+  async function verifyOtp(otp: number): Promise<boolean> {
+    if (user.value) {
+      const resp = await userVerifyCode({ code: otp })
+      if (resp.status === 'success' && resp.data.length > 0) {
+        if (resp.data[0] === 'successfully verified') {
+          user.value.state = 'verified'
+          return true
+        }
+        return false
+      }
+      return false
+    }
+    return false
+  }
+
+  return {
+    user,
+    isAuth,
+    getUserData,
+    getInitials,
+    login,
+    logout,
+    setUser,
+    can,
+    verifyEmail,
+    verifyOtp,
+  }
 })
 
 if (import.meta.hot) {
