@@ -110,7 +110,7 @@ import type { GeneratedReportPayload } from '@/models/generated_report'
 import { useAuthStore } from '@/stores/auth'
 import { useReportsStore } from '@/stores/reports'
 import { useToast } from 'primevue'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
 
 interface ReportProps {
@@ -181,31 +181,38 @@ const isFormValid = computed(() =>
   Object.values(form.value?.errors)?.every((el: any) => !el?.invalid),
 )
 
-const computedDate = computed({
-  get() {
-    if (!executeReport?.value?.date_from || !executeReport?.value?.date_to)
-      return [new Date(), new Date()]
-    return [new Date(executeReport?.value?.date_from), new Date(executeReport?.value?.date_to)]
-  },
-  set(arr: Date[]) {
-    let [date_from, date_to] = arr
-    if (!date_from) date_from = new Date()
-    if (!date_to) date_to = new Date()
-    executeReport.value.date_from = date_from?.toISOString()?.split('T')[0]
-    executeReport.value.date_to = date_to?.toISOString()?.split('T')[0]
-  },
+const computedDate = ref()
+
+watchEffect(() => {
+  executeReport.value.date_from = computedDate.value?.[0]?.toISOString() ?? undefined
+  executeReport.value.date_to = computedDate.value?.[1]?.toISOString() ?? undefined
 })
 
 const onGeneratedReportSubmit = async () => {
   if (isFormValid.value) {
     isDialog.value = false
     const { values } = form.value
-    const default_from = new Date('1970-01-01')
-    const default_to = new Date()
+    const default_from = new Date(values?.date_from || '1970-01-01')
+    if (default_from.getHours() === 21) default_from.setHours(24)
+    const default_to = new Date(values?.date_to || Date.now())
+    const locale = new Intl.Locale('ru', {
+      script: 'Russ',
+      region: 'RU',
+      hourCycle: 'h24',
+      calendar: 'gregory',
+    })
     const payload = {
       report_id: values.report.id,
-      date_from: values.date_from || default_from.toISOString().split('T')[0],
-      date_to: values.date_to || default_to.toISOString().split('T')[0],
+      date_from: default_from
+        .toLocaleDateString(locale, { dateStyle: 'short' })
+        .split('.')
+        .reverse()
+        .join('-'),
+      date_to: default_to
+        .toLocaleDateString(locale, { dateStyle: 'short' })
+        .split('.')
+        .reverse()
+        .join('-'),
     }
     const resp = await reportsStore.execute(payload)
     if (resp) {

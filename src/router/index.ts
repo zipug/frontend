@@ -89,6 +89,24 @@ const router = createRouter({
         requiredPermissions: ['do_update:reports_feature'],
       },
     },
+    {
+      path: '/attachments/all',
+      name: 'attachments_all',
+      component: () => import('../views/AttachmentsView.vue'),
+      meta: {
+        requiresAuth: true,
+        requiredPermissions: ['do_read:attachments_feature'],
+      },
+    },
+    {
+      path: '/articles/all',
+      name: 'articles_all',
+      component: () => import('../views/ArticlesView.vue'),
+      meta: {
+        requiresAuth: true,
+        requiredPermissions: ['do_read:articles_feature'],
+      },
+    },
   ],
 })
 

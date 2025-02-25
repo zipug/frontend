@@ -29,7 +29,7 @@
             </Column>
             <Column header="Тип файла" sortable style="width: 20%">
               <template #body>
-                <Chip label=".csv" icon="pi pi-file-excel" />
+                <Chip label="csv" icon="pi pi-file-excel" />
               </template>
             </Column>
             <Column class="!text-end" style="width: 20%">
@@ -71,7 +71,7 @@ const selectRow = async (data: any) => {
   })
   const resp = await reportsStore.download(+data.id)
   if (resp !== null) {
-    const blob = new Blob([resp], { type: 'text/csv' })
+    const blob = new Blob([resp], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
