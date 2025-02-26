@@ -17,10 +17,40 @@
           >
             <template #empty> Роли не найдены </template>
             <template #loading> Загружаются роли. Пожалуйста подождите... </template>
-            <Column field="name" header="Название роли" sortable style="width: 50%"> </Column>
-            <Column field="description" header="Описание роли" sortable style="width: 50%"></Column>
+            <Column field="name" header="Название роли" sortable style="width: 35%"> </Column>
+            <Column field="description" header="Описание роли" sortable style="width: 45%"></Column>
+            <Column field="is_custom" header="Тип" sortable style="width: 10%">
+              <template #body="{ data }">
+                <Tag
+                  :value="data.is_custom ? 'Пользовательский' : 'Системный'"
+                  :severity="data.is_custom ? 'info' : 'success'"
+                  icon="pi pi-users"
+                />
+              </template>
+            </Column>
+            <Column class="!text-end" style="width: 10%">
+              <template #body="{ data }">
+                <Button
+                  v-tooltip="'Редактировать роль'"
+                  icon="pi pi-pencil"
+                  :disabled="!data.is_custom"
+                  @click="selectRow(data)"
+                  severity="secondary"
+                ></Button>
+              </template>
+            </Column>
           </DataTable>
         </div>
+      </template>
+      <template #footer>
+        <Button
+          v-tooltip="'Создать новую роль'"
+          icon="pi pi-plus"
+          @click="router.push('/roles/create')"
+          class="!float-right"
+          label="Создать"
+          severity="success"
+        ></Button>
       </template>
     </Card>
   </div>

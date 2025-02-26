@@ -3,6 +3,7 @@ export interface Role {
   name: string
   description: string
   permissions: Permission[]
+  is_custom: boolean
 }
 
 export interface Permission {

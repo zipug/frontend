@@ -22,6 +22,7 @@ const errorWrapper = (errors: string[]): string => {
     if (val === 'password does not match') ruErrs.push('Неверный пароль')
     if (val === 'invalid email') ruErrs.push('Неверный email')
   })
+  console.log(ruErrs)
   return ruErrs.join(', ')
 }
 
@@ -30,7 +31,9 @@ const onSuccess = (data: LoginResponse) => {
     toast.add({
       severity: 'error',
       summary: 'Ошибка',
-      detail: data?.errors ? errorWrapper(data?.errors) : 'Произошла неизвестная ошибка',
+      detail: data?.errors
+        ? JSON.stringify(errorWrapper(data?.errors))
+        : 'Произошла неизвестная ошибка',
       life: 3000,
     })
     return
@@ -47,7 +50,7 @@ const onError = (err: unknown) => {
   toast.add({
     severity: 'error',
     summary: 'Ошибка',
-    detail: `Произошла неизвестная ошибка: ${err}`,
+    detail: `Произошла неизвестная ошибка: ${JSON.stringify(err)}`,
     life: 3000,
   })
 }

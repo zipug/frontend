@@ -27,7 +27,7 @@ export const userMe = async (): Promise<MeResponse> => {
         email: '',
         name: '',
         lastname: '',
-        role: { id: 0, name: '', description: '', permissions: [] },
+        role: { id: 0, name: '', description: '', permissions: [], is_custom: false },
       },
       errors: [JSON.stringify(error)],
       status: 'failed',

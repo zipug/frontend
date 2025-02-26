@@ -62,6 +62,15 @@ const router = createRouter({
       },
     },
     {
+      path: '/roles/create',
+      name: 'roles_create',
+      component: () => import('../views/RoleView.vue'),
+      meta: {
+        requiresAuth: true,
+        requiredPermissions: ['do_create:roles_feature'],
+      },
+    },
+    {
       path: '/reports/all',
       name: 'reports_all',
       component: () => import('../views/ReportsView.vue'),
@@ -107,6 +116,11 @@ const router = createRouter({
         requiredPermissions: ['do_read:articles_feature'],
       },
     },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'NotFound',
+      component: () => import('../views/NotFoundView.vue'),
+    },
   ],
 })
 
@@ -139,7 +153,15 @@ router.beforeEach((to, from) => {
             flag = true
             break
           }
+          if (action === 'do_create' && !!perms[i]?.do_create) {
+            flag = true
+            break
+          }
           if (action === 'do_update' && !!perms[i]?.do_update) {
+            flag = true
+            break
+          }
+          if (action === 'do_delete' && !!perms[i]?.do_delete) {
             flag = true
             break
           }

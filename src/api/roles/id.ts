@@ -19,6 +19,7 @@ export const roleId = async (id: number): Promise<IdResponse> => {
         name: '',
         description: '',
         permissions: [],
+        is_custom: false,
       },
       errors: [JSON.stringify(error)],
       status: 'failed',
