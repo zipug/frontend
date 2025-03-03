@@ -59,6 +59,8 @@ app.use(PrimeVue, {
       'Дек',
     ],
     upload: 'Загрузить',
+    choose: 'Выбрать',
+    cancel: 'Отменить',
   },
 })
 app.use(VueQueryPlugin, {

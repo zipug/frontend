@@ -53,21 +53,21 @@ const router = createRouter({
       },
     },
     {
+      path: '/users/create',
+      name: 'users_create',
+      component: () => import('../views/UserProfileCreateView.vue'),
+      meta: {
+        requiresAuth: true,
+        requiredPermissions: ['do_create:users_feature'],
+      },
+    },
+    {
       path: '/roles/all',
       name: 'roles_all',
       component: () => import('../views/RolesView.vue'),
       meta: {
         requiresAuth: true,
-        requiredPermissions: ['do_read:roles_feature'],
-      },
-    },
-    {
-      path: '/roles/create',
-      name: 'roles_create',
-      component: () => import('../views/RoleView.vue'),
-      meta: {
-        requiresAuth: true,
-        requiredPermissions: ['do_create:roles_feature'],
+        requiredPermissions: ['do_update:roles_feature'],
       },
     },
     {
@@ -115,6 +115,83 @@ const router = createRouter({
         requiresAuth: true,
         requiredPermissions: ['do_read:articles_feature'],
       },
+    },
+    {
+      path: '/articles/:id',
+      name: 'articles_id',
+      component: () => import('../views/ArticleView.vue'),
+      meta: {
+        requiresAuth: true,
+        requiredPermissions: ['do_update:articles_feature'],
+      },
+    },
+    {
+      path: '/articles/create',
+      name: 'articles_create',
+      component: () => import('../views/ArticleView.vue'),
+      meta: {
+        requiresAuth: true,
+        requiredPermissions: ['do_create:articles_feature'],
+      },
+      props: { isCreate: true },
+    },
+    {
+      path: '/bots/all',
+      name: 'bots_all',
+      component: () => import('../views/BotsView.vue'),
+      meta: {
+        requiresAuth: true,
+        requiredPermissions: ['do_read:bots_feature'],
+      },
+    },
+    {
+      path: '/bots/:id',
+      name: 'bots_id',
+      component: () => import('../views/BotEditView.vue'),
+      meta: {
+        requiresAuth: true,
+        requiredPermissions: ['do_update:bots_feature'],
+      },
+      props: { isCreate: false },
+    },
+    {
+      path: '/bots/create',
+      name: 'bots_create',
+      component: () => import('../views/BotEditView.vue'),
+      meta: {
+        requiresAuth: true,
+        requiredPermissions: ['do_create:bots_feature'],
+      },
+      props: { isCreate: true },
+    },
+    {
+      path: '/projects/all',
+      name: 'projects_all',
+      component: () => import('../views/ProjectsView.vue'),
+      meta: {
+        requiresAuth: true,
+        requiredPermissions: ['do_read:projects_feature'],
+      },
+    },
+    {
+      path: '/projects/:id',
+      name: 'projects_id',
+      component: () => import('../views/ProjectEditView.vue'),
+      meta: {
+        requiresAuth: true,
+        requiredPermissions: ['do_update:projects_feature'],
+      },
+      props: { isCreate: false },
+    },
+    {
+      path: '/projects/create',
+      name: 'projects_create',
+      component: () => import('../views/ProjectEditView.vue'),
+      meta: {
+        requiresAuth: true,
+        requiredPermissions: ['do_create:projects_feature'],
+      },
+      props: { isCreate: true },
     },
     {
       path: '/:pathMatch(.*)*',

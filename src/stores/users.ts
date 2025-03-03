@@ -1,5 +1,6 @@
 import { userAll } from '@/api/users/all'
 import { userId } from '@/api/users/id'
+import { userRegister, type RegisterData } from '@/api/users/register'
 import { userUpdate, type UpdateData } from '@/api/users/update'
 import type { User } from '@/models/user'
 import { acceptHMRUpdate, defineStore } from 'pinia'
@@ -45,11 +46,26 @@ export const useUsersStore = defineStore('users', () => {
     }
   }
 
+  async function registerUser(data: RegisterData): Promise<boolean> {
+    try {
+      const resp = await userRegister(data)
+      if (resp.status === 'success') {
+        return true
+      }
+      return false
+    } catch (err) {
+      console.error(err)
+      return false
+    } finally {
+      clearUsers()
+    }
+  }
+
   function clearUsers() {
     users.value = []
   }
 
-  return { getAllUsers, getUserById, clearUsers, getUsers, updateUserById }
+  return { getAllUsers, getUserById, clearUsers, getUsers, updateUserById, registerUser }
 })
 
 if (import.meta.hot) {

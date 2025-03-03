@@ -1,5 +1,8 @@
 import { articleAll } from '@/api/articles/all'
+import { articleCreate, type CreateData } from '@/api/articles/create'
+import { articleDelete } from '@/api/articles/delete'
 import { articleId } from '@/api/articles/id'
+import { articleUpdate, type UpdateData } from '@/api/articles/update'
 import type { Article } from '@/models/article'
 import { acceptHMRUpdate, defineStore } from 'pinia'
 import { computed, ref } from 'vue'
@@ -29,11 +32,65 @@ export const useArticlesStore = defineStore('articles', () => {
     }
   }
 
+  async function updateArticleById(data: UpdateData): Promise<Article | null> {
+    try {
+      const resp = await articleUpdate(data)
+      if (resp.status === 'success') {
+        return resp.data as Article
+      }
+      return null
+    } catch (err) {
+      console.error(err)
+      return null
+    } finally {
+      clearArticles()
+    }
+  }
+
+  async function createArticle(data: CreateData): Promise<Article | null> {
+    try {
+      const resp = await articleCreate(data)
+      if (resp.status === 'success') {
+        return resp.data as Article
+      }
+      return null
+    } catch (err) {
+      console.error(err)
+      return null
+    } finally {
+      clearArticles()
+    }
+  }
+
+  async function deleteArticle(id: number): Promise<boolean> {
+    try {
+      const resp = await articleDelete(id)
+      if (resp.status === 'success') {
+        return true
+      }
+      return false
+    } catch (err) {
+      console.error(err)
+      return false
+    } finally {
+      clearArticles()
+      await getAllArticles()
+    }
+  }
+
   function clearArticles() {
     articles.value = []
   }
 
-  return { getAllArticles, getArticleById, clearArticles, getArticles }
+  return {
+    getAllArticles,
+    getArticleById,
+    updateArticleById,
+    createArticle,
+    deleteArticle,
+    clearArticles,
+    getArticles,
+  }
 })
 
 if (import.meta.hot) {

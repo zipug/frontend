@@ -43,27 +43,37 @@ const logoutAction = () => {
           />
         </svg>
       </template>
-      <template #item="{ item, props }">
+      <template #item="{ item, props, hasSubmenu }">
         <router-link
           v-ripple
           class="flex items-center"
           v-bind="props.action"
           style="font-size: 1rem; line-height: 1"
           :to="item.route"
-          v-if="item?.route"
+          v-if="item?.route && authStore.can(item?.permission)"
         >
           <span :class="item.icon" style="color: var(--p-menubar-item-icon-color)" />
           <span>{{ item.label }}</span>
+          <i
+            v-if="hasSubmenu"
+            class="pi pi-angle-down ml-auto"
+            style="color: var(--p-menubar-item-icon-color)"
+          ></i>
         </router-link>
         <a
           v-ripple
           class="flex items-center"
           v-bind="props.action"
           style="font-size: 1rem; line-height: 1"
-          v-else
+          v-else-if="authStore.can(item?.permission)"
         >
           <span :class="item.icon" style="color: var(--p-menubar-item-icon-color)" />
           <span>{{ item.label }}</span>
+          <i
+            v-if="hasSubmenu"
+            class="pi pi-angle-down ml-auto"
+            style="color: var(--p-menubar-item-icon-color)"
+          ></i>
         </a>
       </template>
       <template #end>
@@ -94,7 +104,7 @@ const logoutAction = () => {
                 class="flex items-center gap-0.5"
                 style="font-size: 1rem; line-height: 1"
                 v-bind="props.action"
-                v-else
+                v-else-if="authStore.can(item?.permission)"
                 @click="item?.action === 'logout' && logoutAction()"
               >
                 <span :class="item.icon" style="color: var(--p-menubar-item-icon-color)" />
@@ -110,3 +120,9 @@ const logoutAction = () => {
     </div>
   </main>
 </template>
+
+<style>
+.p-menubar-submenu {
+  z-index: 2 !important;
+}
+</style>

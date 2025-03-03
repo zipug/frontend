@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import RoleCreateForm from '@/components/RoleForm.vue'
+import UserProfileCreateForm from '@/components/UserProfileCreateForm.vue'
 </script>
 
 <template>
@@ -9,12 +9,12 @@ import RoleCreateForm from '@/components/RoleForm.vue'
     <Card class="shadow-lg w-full min-w-screen">
       <template #title>
         <span class="flex flex-row gap-4">
-          <span class="text-2xl">Создание роли</span>
+          <span class="text-2xl">Создание пользователя</span>
         </span>
       </template>
       <template #content>
-        <div class="space-y-4">
-          <RoleCreateForm />
+        <div class="mt-4">
+          <UserProfileCreateForm />
         </div>
       </template>
     </Card>

@@ -7,4 +7,6 @@ export interface User {
   lastname?: string
   role?: Role
   state?: string
+  password?: string
+  repeat_password?: string
 }

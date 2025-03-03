@@ -1,16 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watchEffect } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import type { User } from '@/models/user'
 import { useRolesStore } from '@/stores/roles'
-import type { UpdateData } from '@/api/users/update'
 import { useUsersStore } from '@/stores/users'
-import { useToast } from 'primevue'
+import { Password, useToast } from 'primevue'
+import type { RegisterData } from '@/api/users/register'
 
-interface UserProps {
-  usr: User
-}
-
-const props = defineProps<UserProps>()
 const rolesStore = useRolesStore()
 const usersStore = useUsersStore()
 const isRolesLoading = ref(false)
@@ -24,18 +19,28 @@ const customUserResolver = (values: User) => {
     lastname: { invalid: false, error: {} },
     email: { invalid: false, error: {} },
     role: { invalid: false, error: {} },
+    password: { invalid: false, error: {} },
+    repeat_password: { invalid: false, error: {} },
   }
   if (!values?.name) errors.name = { invalid: true, error: { message: 'Имя обязательно' } }
   if (!values?.lastname)
     errors.lastname = { invalid: true, error: { message: 'Фамилия обязательна' } }
   if (!values?.email) errors.email = { invalid: true, error: { messsage: 'Email обязателен' } }
   if (!values?.role?.id) errors.role = { invalid: true, error: { message: 'Роль обязательна' } }
+  if (!values?.password)
+    errors.password = { invalid: true, error: { message: 'Пароль обязателен' } }
+  if (!values?.repeat_password)
+    errors.repeat_password = { invalid: true, error: { message: 'Пароль обязателен' } }
   if (typeof values?.name !== 'string')
     errors.name = { invalid: true, error: { message: 'Имя должно быть строкой' } }
   if (typeof values?.lastname !== 'string')
     errors.lastname.push({ message: 'Фамилия должна быть строкой' })
   if (typeof values?.email !== 'string')
     errors.email = { invalid: true, error: { message: 'Email должен быть строкой' } }
+  if (typeof values?.password !== 'string')
+    errors.password = { invalid: true, error: { message: 'Пароль должен быть строкой' } }
+  if (typeof values?.repeat_password !== 'string')
+    errors.repeat_password = { invalid: true, error: { message: 'Пароль должен быть строкой' } }
   try {
     values.name = values?.name?.trim()
   } catch (err) {
@@ -47,6 +52,16 @@ const customUserResolver = (values: User) => {
     errors.lastname = { invalid: true, error: { message: 'Фамилия не может быть пустой' } }
   }
   try {
+    values.password = values?.password?.trim()
+  } catch (err) {
+    errors.password = { invalid: true, error: { message: 'Пароль должен быть строкой' } }
+  }
+  try {
+    values.repeat_password = values?.repeat_password?.trim()
+  } catch (err) {
+    errors.repeat_password = { invalid: true, error: { message: 'Пароль должен быть строкой' } }
+  }
+  try {
     values.email = values?.email?.trim()?.toLowerCase()
   } catch (err) {
     errors.email = { invalid: true, error: { message: 'Email не может быть пустым' } }
@@ -54,6 +69,14 @@ const customUserResolver = (values: User) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   if (!emailRegex.test(values?.email || ''))
     errors.email = { invalid: true, error: { message: 'Email не валиден' } }
+  if (values?.password && values?.password?.length < 6) {
+    errors.password = {
+      invalid: true,
+      error: { message: 'Пароль должен быть не менее 6 символов' },
+    }
+  }
+  if (values?.password !== values?.repeat_password)
+    errors.repeat_password = { invalid: true, error: { message: 'Пароли не совпадают' } }
 
   return {
     values,
@@ -68,10 +91,11 @@ const form = computed(() => {
   }
   return {
     values: {
-      id: 0,
       name: '',
       lastname: '',
       email: '',
+      password: '',
+      repeat_password: '',
       role: {
         id: 0,
         name: '',
@@ -85,6 +109,8 @@ const form = computed(() => {
       lastname: { invalid: false, error: { message: '' } },
       email: { invalid: false, error: { message: '' } },
       role: { invalid: false, error: { message: '' } },
+      password: { invalid: false, error: { message: '' } },
+      repeat_password: { invalid: false, error: { message: '' } },
     },
   }
 })
@@ -93,10 +119,11 @@ const isFormValid = computed(() =>
 )
 
 const user = ref<User>({
-  id: 0,
   name: '',
   lastname: '',
   email: '',
+  password: '',
+  repeat_password: '',
   role: {
     id: 0,
     name: '',
@@ -118,73 +145,46 @@ const user = ref<User>({
 const onFormSubmit = async () => {
   if (isFormValid.value) {
     const { values } = form.value
-    const updateUser: UpdateData = {
-      id: values?.id ?? 0,
+    const registerUser: RegisterData = {
       email: values?.email ?? '',
       name: values?.name ?? '',
       lastname: values?.lastname ?? '',
+      password: values?.password ?? '',
+      repeat_password: values?.repeat_password ?? '',
     }
     isUserLoading.value = true
-    const resp = await usersStore.updateUserById(updateUser)
+    const resp = await usersStore.registerUser(registerUser)
     isUserLoading.value = false
     if (!!resp) {
-      user.value = {
-        id: resp?.id ?? 0,
-        state: resp?.state ?? '',
-        name: resp?.name ?? '',
-        lastname: resp?.lastname ?? '',
-        email: resp?.email ?? '',
-        ...user.value,
-      }
       toast.add({
         severity: 'success',
         summary: 'Успешно',
-        detail: 'Профиль обновлен',
+        detail: 'Пользователь создан',
         life: 3000,
       })
     } else {
       toast.add({
         severity: 'error',
         summary: 'Ошибка',
-        detail: 'Профиль не обновлен',
+        detail: 'Не удалось создать пользователя. Попробуйте позже...',
         life: 3000,
       })
     }
   }
 }
 
-watchEffect(() => {
-  user.value = {
-    id: props?.usr?.id ?? 0,
-    name: props?.usr?.name ?? '',
-    lastname: props?.usr?.lastname ?? '',
-    email: props?.usr?.email ?? '',
-    role: props?.usr?.role ?? {
-      id: 0,
-      name: '',
-      description: '',
-      permissions: [],
-      is_custom: false,
-    },
-  }
-})
-
 onMounted(async () => {
   isRolesLoading.value = true
   await rolesStore.getAllRoles()
   roles.value = rolesStore.getRoles
+  user.value.role = roles.value.find((el: any) => el.name === 'support')
   isRolesLoading.value = false
 })
 </script>
 
 <template>
   <div>
-    <Form
-      v-model="user"
-      :initialValues="props.usr"
-      class="grid gap-4 w-full"
-      @submit="() => onFormSubmit()"
-    >
+    <Form v-model="user" class="grid gap-4 w-full" @submit="() => onFormSubmit()">
       <div class="flex flex-col justify-center items-center gap-4">
         <div class="w-full flex flex-row gap-4">
           <IftaLabel class="w-full">
@@ -234,6 +234,80 @@ onMounted(async () => {
               {{ form?.errors?.lastname?.error?.message }}
             </Message>
             <label for="lastname" class="block text-sm font-medium text-gray-700">Фамилия</label>
+          </IftaLabel>
+        </div>
+        <div class="w-full flex flex-row gap-4">
+          <IftaLabel class="w-full">
+            <InputGroup>
+              <Password
+                v-model="user.password"
+                feedback
+                fluid
+                class="w-full"
+                id="password"
+                name="password"
+                toggle-mask
+                type="password"
+              >
+                <template #header>
+                  <div class="font-semibold text-xm mb-4">Введите пароль</div>
+                </template>
+                <template #footer>
+                  <div>
+                    <Divider />
+                    <ul class="pl-2 ml-2 my-0 leading-normal">
+                      <li class="mb-1">Длина не менее 10 символов</li>
+                      <li class="mb-1">Пароль должен содержать как минимум 1 цифру</li>
+                      <li class="mb-1">Пароль должен содержать как минимум 1 специальный символ</li>
+                    </ul>
+                  </div>
+                </template>
+              </Password>
+              <InputGroupAddon>
+                <i class="pi pi-lock"></i>
+              </InputGroupAddon>
+            </InputGroup>
+            <Message
+              v-if="form?.errors?.password?.invalid"
+              severity="error"
+              size="small"
+              variant="simple"
+            >
+              {{ form?.errors?.password?.error?.message }}
+            </Message>
+            <label for="password" class="block text-sm font-medium text-gray-700">Пароль</label>
+          </IftaLabel>
+          <IftaLabel class="w-full">
+            <InputGroup>
+              <Password
+                v-model="user.repeat_password"
+                feedback
+                fluid
+                class="w-full"
+                id="password"
+                name="password"
+                toggle-mask
+                type="password"
+              >
+                <template #header>
+                  <div class="font-semibold text-xm mb-4">Повторите пароль</div>
+                </template>
+              </Password>
+              <InputGroupAddon>
+                <i class="pi pi-lock"></i>
+              </InputGroupAddon>
+            </InputGroup>
+            <Message
+              v-if="form?.errors?.repeat_password?.invalid"
+              severity="error"
+              size="small"
+              variant="simple"
+            >
+              {{ form?.errors?.repeat_password?.error?.message }}
+            </Message>
+            <label for="password" class="block text-sm font-medium text-gray-700"
+              >Повторите пароль</label
+            >
           </IftaLabel>
         </div>
         <div class="w-full flex flex-row gap-4">
@@ -300,83 +374,10 @@ onMounted(async () => {
             <label for="role_name" class="block text-sm font-medium text-gray-700">Роль</label>
           </IftaLabel>
         </div>
-        <DataTable :value="user?.role?.permissions ?? []" dataKey="id" class="w-full">
-          <template #empty> У пользователя нет прав </template>
-          <template #loading> Загружаются пользователи. Пожалуйста подождите... </template>
-          <Column field="description" header="Описание" sortable style="width: 40%"></Column>
-          <Column
-            field="do_read"
-            dataType="boolean"
-            header="Чтение"
-            bodyClass="text-center"
-            style="width: 15%"
-          >
-            <template #body="{ data }">
-              <i
-                class="pi"
-                :class="{
-                  'pi-check-circle text-green-500 ': data.do_read,
-                  'pi-times-circle text-red-500': !data.do_read,
-                }"
-              ></i>
-            </template>
-          </Column>
-          <Column
-            field="do_update"
-            dataType="boolean"
-            header="Измененение"
-            bodyClass="text-center"
-            style="width: 15%"
-          >
-            <template #body="{ data }">
-              <i
-                class="pi"
-                :class="{
-                  'pi-check-circle text-green-500 ': data.do_update,
-                  'pi-times-circle text-red-500': !data.do_update,
-                }"
-              ></i>
-            </template>
-          </Column>
-          <Column
-            field="do_create"
-            dataType="boolean"
-            header="Создание"
-            bodyClass="text-center"
-            style="width: 15%"
-          >
-            <template #body="{ data }">
-              <i
-                class="pi"
-                :class="{
-                  'pi-check-circle text-green-500 ': data.do_create,
-                  'pi-times-circle text-red-500': !data.do_create,
-                }"
-              ></i>
-            </template>
-          </Column>
-          <Column
-            field="do_delete"
-            dataType="boolean"
-            header="Удаление"
-            bodyClass="text-center"
-            style="width: 15%"
-          >
-            <template #body="{ data }">
-              <i
-                class="pi"
-                :class="{
-                  'pi-check-circle text-green-500 ': data.do_delete,
-                  'pi-times-circle text-red-500': !data.do_delete,
-                }"
-              ></i>
-            </template>
-          </Column>
-        </DataTable>
         <Button
           :disabled="!isFormValid && isUserLoading"
           class="w-full"
-          label="Обновить"
+          label="Создать"
           severity="success"
           type="submit"
         />

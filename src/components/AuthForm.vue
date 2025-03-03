@@ -29,7 +29,7 @@ const loginSchema = yup.object().shape({
   name: yup.string().optional(),
   lastname: yup.string().optional(),
   email: yup.string().lowercase().trim().email().required('Email обязателен'),
-  password: yup.string().lowercase().trim().required('Пароль обязателен'),
+  password: yup.string().trim().required('Пароль обязателен'),
   repeat_password: yup.string().optional(),
 })
 
@@ -39,13 +39,11 @@ const registerSchema = yup.object().shape({
   email: yup.string().lowercase().trim().email().required('Email обязателен'),
   password: yup
     .string()
-    .lowercase()
     .trim()
-    .min(6, 'Минимальная длина пароля 10 символов')
+    .min(6, 'Минимальная длина пароля 6 символов')
     .required('Пароль обязателен'),
   repeat_password: yup
     .string()
-    .lowercase()
     .trim()
     .equals([yup.ref('password')], 'Пароли не совпадают')
     .required('Пароли не совпадают'),
