@@ -194,6 +194,24 @@ const router = createRouter({
       props: { isCreate: true },
     },
     {
+      path: '/chats/all',
+      name: 'chats_all',
+      component: () => import('../views/ChatsView.vue'),
+      meta: {
+        requiresAuth: true,
+        requiredPermissions: ['do_read:chats_feature'],
+      },
+    },
+    {
+      path: '/chats/:id',
+      name: 'chats_id',
+      component: () => import('../views/UserChatView.vue'),
+      meta: {
+        requiresAuth: true,
+        requiredPermissions: ['do_update:chats_feature'],
+      },
+    },
+    {
       path: '/:pathMatch(.*)*',
       name: 'NotFound',
       component: () => import('../views/NotFoundView.vue'),
