@@ -1,41 +1,23 @@
 <script lang="ts" setup>
+import { useAuthStore } from '@/stores/auth'
 import { useBotsStore } from '@/stores/bots'
+import { useChatsStore } from '@/stores/chats'
 import { useProjectsStore } from '@/stores/projects'
-import { useResourcesStore } from '@/stores/resources'
 import { useUsersStore } from '@/stores/users'
-import { getBotSeverity, getBotStateIcon } from '@/utils/bot_state_severity'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import CpuChart from './CpuChart.vue'
+import { useRouter } from 'vue-router'
 
-const resourcesStore = useResourcesStore()
+const router = useRouter()
+const authStore = useAuthStore()
+const chatsStore = useChatsStore()
 const projectsStore = useProjectsStore()
 const botsStore = useBotsStore()
 const usersStore = useUsersStore()
-const resources = computed(() => resourcesStore.getResources)
-const ramMeter = computed(() => [
-  {
-    label: 'RAM used',
-    value: resources?.value?.[resources?.value?.length - 1]?.ram?.usage || 0,
-    color: 'var(--p-red-500)',
-  },
-])
-const hddMeter = computed(() => [
-  {
-    label: 'HDD used',
-    value: resources?.value?.[resources?.value?.length - 1]?.hdd?.usage || 0,
-    color: 'var(--p-blue-500)',
-  },
-])
-const totalRam = computed(
-  () => (resources?.value?.[resources?.value?.length - 1]?.ram?.total || 0) / (1 << 30),
-)
-const totalHdd = computed(
-  () => (resources?.value?.[resources?.value?.length - 1]?.hdd?.total || 0) / (1 << 30),
-)
 const isLoading = ref(false)
 const projects = computed(() => projectsStore.getProjects)
 const bots = computed(() => botsStore.getBots)
 const users = computed(() => usersStore.getUsers)
+const chats = computed(() => chatsStore.getChats)
 const getUser = (user_id: number): string => {
   const user = users.value?.find((user: any) => user.id === user_id)
   return user ? `${user?.name} ${user?.lastname}` : ''
@@ -54,11 +36,13 @@ onMounted(async () => {
   await projectsStore.getAllProjects()
   await botsStore.getAllBots()
   await usersStore.getAllUsers()
+  await chatsStore.getAllChats()
   isLoading.value = false
 })
 onUnmounted(() => {
   projectsStore.clearProjects()
   botsStore.clearBots()
+  chatsStore.clearChats()
   usersStore.clearUsers()
 })
 </script>
@@ -113,15 +97,6 @@ onUnmounted(() => {
           :loading="isLoading"
         >
           <Column field="name" header="Название" sortable style="width: 30%"> </Column>
-          <Column field="state" header="Статус" style="width: 30%">
-            <template #body="{ data }">
-              <Tag
-                :value="data.state.toUpperCase()"
-                :icon="getBotStateIcon(data.state)"
-                :severity="getBotSeverity(data.state)"
-              />
-            </template>
-          </Column>
           <Column field="project_name" header="Проект" style="width: 40%">
             <template #body="{ data }">
               <Tag icon="pi pi-server" :value="data.project_name" />
@@ -130,38 +105,50 @@ onUnmounted(() => {
         </DataTable>
       </Panel>
     </div>
-    <Panel header="Потребление ресурсов">
-      <Tabs value="0">
-        <TabList>
-          <Tab value="0">CPU</Tab>
-          <Tab value="1">HDD & RAM</Tab>
-        </TabList>
-        <TabPanels>
-          <TabPanel value="0">
-            <Panel>
-              <CpuChart :cpu="resources?.map((r: any) => r?.cpu?.usage) || []" class="max-h-72" />
-            </Panel>
-          </TabPanel>
-          <TabPanel value="1">
-            <MeterGroup :value="ramMeter">
-              <template #start="{ totalPercent }">
-                <div class="flex justify-between mt-4 mb-2 relative">
-                  <span>RAM</span>
-                  <span class="font-medium">{{ totalRam.toFixed(2) }} GB</span>
-                </div>
-              </template>
-            </MeterGroup>
-            <MeterGroup :value="hddMeter">
-              <template #start="{ totalPercent }">
-                <div class="flex justify-between mt-4 mb-2 relative">
-                  <span>HDD</span>
-                  <span class="font-medium">{{ totalHdd.toFixed(2) }} GB</span>
-                </div>
-              </template>
-            </MeterGroup>
-          </TabPanel>
-        </TabPanels>
-      </Tabs>
-    </Panel>
+    <div>
+      <Panel header="Чаты">
+        <DataTable
+          size="small"
+          :value="chats"
+          :rows="3"
+          :rowsPerPageOptions="[3, 5, 10]"
+          scrollable
+          paginator
+          :loading="isLoading"
+        >
+          <Column field="question" header="Впорос" sortable style="width: 50%"> </Column>
+          <Column field="name" header="Проект" sortable style="width: 30%">
+            <template #body="{ data }">
+              <Tag
+                icon="pi pi-server"
+                :value="data.name.length > 20 ? data.name.slice(0, 20) + '...' : data.name"
+              />
+            </template>
+          </Column>
+          <Column field="is_resolved" header="Статус" style="width: 30%">
+            <template #body="{ data }">
+              <Tag
+                :value="data.is_resolved ? 'РЕШЕН' : 'НЕ РЕШЕН'"
+                :severity="data.is_resolved ? 'success' : 'danger'"
+              />
+            </template>
+          </Column>
+          <Column class="!text-end" style="width: 10%">
+            <template #body="{ data }">
+              <ButtonGroup>
+                <Button
+                  v-tooltip="'Открыть чат'"
+                  icon="pi pi-angle-right"
+                  :disabled="!authStore.can('do_update:chats_feature')"
+                  @click="router.push(`/chats/${data.id}`)"
+                  severity="secondary"
+                  variant="text"
+                />
+              </ButtonGroup>
+            </template>
+          </Column>
+        </DataTable>
+      </Panel>
+    </div>
   </div>
 </template>

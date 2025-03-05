@@ -43,7 +43,13 @@
                 />
               </template>
             </Column>
-            <Column field="created_at" header="Время" class="max-w-16 truncate" style="width: 20%">
+            <Column
+              field="created_at"
+              header="Время"
+              sortable
+              class="max-w-16 truncate"
+              style="width: 20%"
+            >
               <template #body="{ data }"
                 ><Tag
                   :value="
@@ -53,7 +59,7 @@
                 />
               </template>
             </Column>
-            <Column field="is_resolved" header="Статус" style="width: 10%">
+            <Column field="is_resolved" header="Статус" sortable style="width: 10%">
               <template #body="{ data }">
                 <Tag
                   :value="data.is_resolved ? 'РЕШЕН' : 'НЕ РЕШЕН'"
@@ -67,7 +73,7 @@
                   <Button
                     v-tooltip="'Открыть чат'"
                     icon="pi pi-angle-right"
-                    :disabled="!authStore.can('do_update:projects_feature')"
+                    :disabled="!authStore.can('do_update:chats_feature')"
                     @click="selectRow(data)"
                     severity="secondary"
                     variant="text"
@@ -97,14 +103,9 @@ const chats = computed(() => {
   if (authStore.can('do_create:chats_feature')) {
     return chatsStore.getChats
       ?.filter((el) => el?.user_id === authStore.getUserData?.id)
-      ?.sort((a, b) => {
+      ?.sort((b, a) => {
         if (a.id < b.id) return -1
         else if (b.id < a.id) return 1
-        else return 0
-      })
-      ?.sort((a, b) => {
-        if (a?.is_resolved < b?.is_resolved) return -1
-        else if (b?.is_resolved < a?.is_resolved) return 1
         else return 0
       })
   } else if (authStore.can('do_read:chats_feature')) {
@@ -116,14 +117,9 @@ const chats = computed(() => {
         }
         return acc
       }, [])
-      ?.sort((a: any, b: any) => {
+      ?.sort((b: any, a: any) => {
         if (a.id < b.id) return -1
         else if (b.id < a.id) return 1
-        else return 0
-      })
-      ?.sort((a: any, b: any) => {
-        if (a?.is_resolved < b?.is_resolved) return -1
-        else if (b?.is_resolved < a?.is_resolved) return 1
         else return 0
       })
   }

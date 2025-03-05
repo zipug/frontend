@@ -46,9 +46,9 @@ export const useUsersStore = defineStore('users', () => {
     }
   }
 
-  async function registerUser(data: RegisterData): Promise<boolean> {
+  async function registerUser(data: RegisterData, path: string): Promise<boolean> {
     try {
-      const resp = await userRegister(data)
+      const resp = await userRegister(data, path)
       if (resp.status === 'success') {
         return true
       }

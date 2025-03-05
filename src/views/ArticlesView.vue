@@ -17,8 +17,10 @@
             :loading="isLoading"
           >
             <template #header>
-              <span class="flex flex-row justify-between">
-                <span class="text-2xl font-medium">Статьи</span>
+              <span
+                class="flex max-sm:flex-col max-sm:justify-center max-sm:items-center max-sm:gap-2 flex-row justify-between"
+              >
+                <span class="text-2xl max-sm:text-xl font-medium">Статьи</span>
                 <div class="pb-4 flex flex-row gap-4">
                   <Button
                     rounded

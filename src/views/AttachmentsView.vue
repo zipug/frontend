@@ -18,8 +18,10 @@
             :loading="isLoading"
           >
             <template #header>
-              <span class="flex flex-row justify-between">
-                <span class="text-2xl font-medium">Вложения (файлы)</span>
+              <span
+                class="flex max-sm:flex-col max-sm:justify-center max-sm:items-center max-sm:gap-2 flex-row justify-between"
+              >
+                <span class="text-2xl max-sm:text-xl font-medium">Вложения (файлы)</span>
                 <div class="pb-4 flex flex-row gap-4">
                   <Button
                     rounded
@@ -41,23 +43,64 @@
             <template #empty> Вложения не найдены </template>
             <template #loading> Вложения загружаются. Пожалуйста подождите... </template>
             <template #expansion="{ data }">
-              <h2 class="text-lg font-bold">Статьи</h2>
-              <DataTable
-                :value="
-                  articles?.filter((el) => el?.attachments?.some((el) => el?.id === data.id)) ?? []
-                "
-                dataKey="id"
-                class="w-full"
-              >
-                <template #empty> Файл не привязан ни к одной статье </template>
-                <template #loading> Загружаются статьи. Пожалуйста подождите... </template>
-                <Column field="name" header="Название" sortable style="width: 40%"></Column>
-                <Column field="description" header="Описание" sortable style="width: 40%"></Column>
-              </DataTable>
+              <div class="flex flex-col gap-2">
+                <h2 class="sm:hidden text-lg font-bold">Действия</h2>
+                <div class="sm:hidden">
+                  <ButtonGroup>
+                    <Button
+                      v-tooltip="'Скачать файл'"
+                      icon="pi pi-download"
+                      @click="downloadFile(data)"
+                      :disabled="!authStore.can('do_update:attachments_feature')"
+                      severity="secondary"
+                      variant="text"
+                    />
+                    <Button
+                      v-tooltip="'Привязать к статье'"
+                      icon="pi pi-paperclip"
+                      @click="setAttachmentForBind(data)"
+                      :disabled="!authStore.can('do_update:attachments_feature')"
+                      severity="secondary"
+                      variant="text"
+                    />
+                    <Button
+                      v-tooltip="'Удалить файл'"
+                      icon="pi pi-trash"
+                      :disabled="!authStore.can('do_delete:attachments_feature')"
+                      @click="deleteFile(data)"
+                      severity="danger"
+                      variant="text"
+                    />
+                  </ButtonGroup>
+                </div>
+                <h2 class="text-lg font-bold sm:hidden">Ссылка</h2>
+                <a class="sm:hidden" :href="data.url" target="_blank" v-tooltip="'Посмотреть файл'">
+                  <Tag :value="shortLink(data?.url)" icon="pi pi-link" severity="primary" />
+                </a>
+                <h2 class="text-lg font-bold">Статьи</h2>
+                <DataTable
+                  :value="
+                    articles?.filter((el) => el?.attachments?.some((el) => el?.id === data.id)) ??
+                    []
+                  "
+                  dataKey="id"
+                  class="w-full"
+                >
+                  <template #empty> Файл не привязан ни к одной статье </template>
+                  <template #loading> Загружаются статьи. Пожалуйста подождите... </template>
+                  <Column field="name" header="Название" sortable style="width: 40%"></Column>
+                  <Column
+                    field="description"
+                    header="Описание"
+                    sortable
+                    style="width: 40%"
+                  ></Column>
+                </DataTable>
+              </div>
             </template>
             <Column expander style="width: 1rem" />
             <Column field="name" header="Название" sortable style="width: 30%"> </Column>
-            <Column field="url" header="Ссылка" sortable style="width: 40%">
+            <Column field="url" header="Ссылка" class="max-sm:hidden" sortable style="width: 40%">
               <template #body="{ data }">
                 <a :href="data.url" target="_blank" v-tooltip="'Посмотреть файл'">
                   <Tag :value="shortLink(data?.url)" icon="pi pi-link" severity="primary" />
@@ -69,7 +112,7 @@
                 <Chip :label="data?.mimetype?.split('/')[1]" icon="pi pi-file-excel" />
               </template>
             </Column>
-            <Column class="!text-end" style="width: 5%">
+            <Column class="max-sm:hidden" style="width: 5%">
               <template #body="{ data }">
                 <ButtonGroup>
                   <Button

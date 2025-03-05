@@ -1,41 +1,26 @@
 <script lang="ts" setup>
+import { useAuthStore } from '@/stores/auth'
 import { useBotsStore } from '@/stores/bots'
+import { useChatsStore } from '@/stores/chats'
 import { useProjectsStore } from '@/stores/projects'
-import { useResourcesStore } from '@/stores/resources'
 import { useUsersStore } from '@/stores/users'
 import { getBotSeverity, getBotStateIcon } from '@/utils/bot_state_severity'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import CpuChart from './CpuChart.vue'
+import { useRouter } from 'vue-router'
+import DoughnutChart from './DoughnutChart.vue'
+import UserProjectsChart from './UserProjectsChart.vue'
 
-const resourcesStore = useResourcesStore()
+const router = useRouter()
+const authStore = useAuthStore()
 const projectsStore = useProjectsStore()
 const botsStore = useBotsStore()
+const chatsStore = useChatsStore()
 const usersStore = useUsersStore()
-const resources = computed(() => resourcesStore.getResources)
-const ramMeter = computed(() => [
-  {
-    label: 'RAM used',
-    value: resources?.value?.[resources?.value?.length - 1]?.ram?.usage || 0,
-    color: 'var(--p-red-500)',
-  },
-])
-const hddMeter = computed(() => [
-  {
-    label: 'HDD used',
-    value: resources?.value?.[resources?.value?.length - 1]?.hdd?.usage || 0,
-    color: 'var(--p-blue-500)',
-  },
-])
-const totalRam = computed(
-  () => (resources?.value?.[resources?.value?.length - 1]?.ram?.total || 0) / (1 << 30),
-)
-const totalHdd = computed(
-  () => (resources?.value?.[resources?.value?.length - 1]?.hdd?.total || 0) / (1 << 30),
-)
 const isLoading = ref(false)
-const projects = computed(() => projectsStore.getProjects)
-const bots = computed(() => botsStore.getBots)
-const users = computed(() => usersStore.getUsers)
+const projects = computed(() => projectsStore.getProjects || [])
+const bots = computed(() => botsStore.getBots || [])
+const chats = computed(() => chatsStore.getChats || [])
+const users = computed(() => usersStore.getUsers || [])
 const getUser = (user_id: number): string => {
   const user = users.value?.find((user: any) => user.id === user_id)
   return user ? `${user?.name} ${user?.lastname}` : ''
@@ -49,16 +34,51 @@ const botProjects = computed(() => {
     }
   })
 })
+const resolved = computed(() => chats.value?.filter((chat: any) => chat?.is_resolved).length)
+const not_resolved = computed(() => chats.value?.length - resolved.value)
+const tabs = ref('0')
+function getRandomRGBA() {
+  const r = Math.floor(Math.random() * 256) // Random red (0-255)
+  const g = Math.floor(Math.random() * 256) // Random green (0-255)
+  const b = Math.floor(Math.random() * 256) // Random blue (0-255)
+  const a = Math.random().toFixed(2) // Random alpha (0-1, rounded to 2 decimal places)
+  return { r, g, b, a }
+}
+const userProjectData = computed(() => {
+  const t = chats.value.reduce((acc: any, val: any) => {
+    if (acc?.findIndex((el: any) => el?.bot_id === val.bot_id) === -1) {
+      const color = getRandomRGBA()
+      return [
+        ...acc,
+        {
+          bot_id: val?.bot_id,
+          name: projects.value?.find((el: any) => el?.project?.id === val?.project_id)?.project
+            ?.name,
+          users: 1,
+          bg: `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a})`,
+          br: `rgb(${color.r}, ${color.g}, ${color.b})`,
+        },
+      ]
+    } else {
+      acc.find((el: any) => el?.bot_id === val.bot_id).users++
+      return acc
+    }
+  }, [])
+  console.log(t)
+  return t
+})
 onMounted(async () => {
   isLoading.value = true
   await projectsStore.getAllProjects()
   await botsStore.getAllBots()
+  await chatsStore.getAllChats()
   await usersStore.getAllUsers()
   isLoading.value = false
 })
 onUnmounted(() => {
   projectsStore.clearProjects()
   botsStore.clearBots()
+  chatsStore.clearChats()
   usersStore.clearUsers()
 })
 </script>
@@ -130,35 +150,18 @@ onUnmounted(() => {
         </DataTable>
       </Panel>
     </div>
-    <Panel header="Потребление ресурсов">
-      <Tabs value="0">
+    <Panel header="Общая статистика по ботам">
+      <Tabs v-model:value="tabs">
         <TabList>
-          <Tab value="0">CPU</Tab>
-          <Tab value="1">HDD & RAM</Tab>
+          <Tab value="0">Вопросы пользователей</Tab>
+          <Tab value="1">Количество пользователей</Tab>
         </TabList>
         <TabPanels>
-          <TabPanel value="0">
-            <Panel>
-              <CpuChart :cpu="resources?.map((r: any) => r?.cpu?.usage) || []" class="max-h-72" />
-            </Panel>
+          <TabPanel class="flex justify-center items-center" :key="tabs + 1" value="0">
+            <DoughnutChart class="max-h-72" :resolved="resolved" :not_resolved="not_resolved" />
           </TabPanel>
-          <TabPanel value="1">
-            <MeterGroup :value="ramMeter">
-              <template #start="{ totalPercent }">
-                <div class="flex justify-between mt-4 mb-2 relative">
-                  <span>RAM</span>
-                  <span class="font-medium">{{ totalRam.toFixed(2) }} GB</span>
-                </div>
-              </template>
-            </MeterGroup>
-            <MeterGroup :value="hddMeter">
-              <template #start="{ totalPercent }">
-                <div class="flex justify-between mt-4 mb-2 relative">
-                  <span>HDD</span>
-                  <span class="font-medium">{{ totalHdd.toFixed(2) }} GB</span>
-                </div>
-              </template>
-            </MeterGroup>
+          <TabPanel :key="tabs + 1" value="1">
+            <UserProjectsChart class="min-h-72" :projects="projects.map((el) => el.project.name)" />
           </TabPanel>
         </TabPanels>
       </Tabs>

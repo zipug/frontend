@@ -1,7 +1,9 @@
 import { chatAll } from '@/api/chats/all'
+import { chatTelegramUser, type TgUserRequest } from '@/api/chats/get_tg_user'
 import { chatId } from '@/api/chats/id'
-import { chatResolve } from '@/api/chats/resolve'
+import { chatSend, type SendRequest } from '@/api/chats/send_message'
 import type { Chat } from '@/models/chat'
+import type { TelegramUser } from '@/models/telegram'
 import { acceptHMRUpdate, defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
@@ -20,19 +22,29 @@ export const useChatsStore = defineStore('chats', () => {
     }
   }
 
-  async function getChatById(id: number): Promise<Chat | null> {
+  async function getChatById(id: number): Promise<Chat[] | null> {
     try {
       const resp = await chatId(id)
-      return resp.data as Chat
+      return resp.data as Chat[]
     } catch (err) {
       console.error(err)
       return null
     }
   }
 
-  async function resolveChatById(id: number): Promise<boolean> {
+  async function getTelegramUser(data: TgUserRequest): Promise<TelegramUser | null> {
     try {
-      const resp = await chatResolve(id)
+      const resp = await chatTelegramUser(data)
+      return resp.data as TelegramUser
+    } catch (err) {
+      console.error(err)
+      return null
+    }
+  }
+
+  async function sendMessage(data: SendRequest): Promise<boolean> {
+    try {
+      const resp = await chatSend(data)
       if (resp.status === 'success') {
         return true
       }
@@ -54,7 +66,8 @@ export const useChatsStore = defineStore('chats', () => {
     getAllChats,
     getChatById,
     clearChats,
-    resolveChatById,
+    getTelegramUser,
+    sendMessage,
     getChats,
   }
 })

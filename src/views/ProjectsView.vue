@@ -14,12 +14,15 @@
             size="small"
             :rowsPerPageOptions="[5, 10, 20, 50]"
             dataKey="id"
+            :expandedRows="[]"
             tableStyle="min-width: 50 rem"
             :loading="isLoading"
           >
             <template #header>
-              <span class="flex flex-row justify-between">
-                <span class="text-2xl font-medium">Проекты</span>
+              <span
+                class="flex max-sm:flex-col max-sm:justify-center max-sm:items-center max-sm:gap-2 flex-row justify-between"
+              >
+                <span class="text-2xl max-sm:text-xl font-medium">Проекты</span>
                 <div class="pb-4 flex flex-row gap-4">
                   <Button
                     rounded
@@ -41,11 +44,44 @@
             </template>
             <template #empty>Проекты не найдены</template>
             <template #loading>Загружается список проектов. Пожалуйста подождите...</template>
+            <template #expansion="{ data }">
+              <div class="flex flex-col gap-4">
+                <h2 class="sm:hidden text-lg font-bold">Описание</h2>
+                <span class="sm:hidden">{{ data.project.description }}</span>
+                <h2 class="sm:hidden text-lg font-bold">Пользователь</h2>
+                <span class="sm:hidden">
+                  <Avatar :label="getUserAvatar(data.project.user_id)" shape="circle" />
+                  <span class="text-sm ml-2">{{ getUser(data.project.user_id) }}</span>
+                </span>
+                <h2 class="sm:hidden text-lg font-bold">Действия</h2>
+                <div class="sm:hidden">
+                  <ButtonGroup>
+                    <Button
+                      v-tooltip="'Изменить проект'"
+                      icon="pi pi-wrench"
+                      :disabled="!authStore.can('do_update:projects_feature')"
+                      @click="updateProject(data)"
+                      severity="secondary"
+                      variant="text"
+                    />
+                    <Button
+                      v-tooltip="'Удалить проект'"
+                      icon="pi pi-trash"
+                      :disabled="!authStore.can('do_update:projects_feature')"
+                      @click="deleteProject(data)"
+                      severity="danger"
+                      variant="text"
+                    />
+                  </ButtonGroup>
+                </div>
+              </div>
+            </template>
+            <Column class="sm:hidden" expander style="width: 1rem" />
             <Column field="project.name" header="Название" sortable style="width: 20%"> </Column>
             <Column
               field="project.description"
               header="Описание"
-              class="max-w-16 truncate"
+              class="max-sm:hidden max-w-16 truncate"
               style="width: 20%"
             >
             </Column>
@@ -59,7 +95,12 @@
                 />
               </template>
             </Column>
-            <Column field="project.user_id" header="Пользователь" style="width: 20%">
+            <Column
+              class="max-sm:hidden"
+              field="project.user_id"
+              header="Пользователь"
+              style="width: 20%"
+            >
               <template #body="{ data }">
                 <span>
                   <Avatar :label="getUserAvatar(data.project.user_id)" shape="circle" />
@@ -67,7 +108,7 @@
                 </span>
               </template>
             </Column>
-            <Column class="!text-end" style="width: 10%">
+            <Column class="max-sm:hidden" style="width: 10%">
               <template #body="{ data }">
                 <ButtonGroup>
                   <Button

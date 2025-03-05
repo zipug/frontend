@@ -153,7 +153,7 @@ const onFormSubmit = async () => {
       repeat_password: values?.repeat_password ?? '',
     }
     isUserLoading.value = true
-    const resp = await usersStore.registerUser(registerUser)
+    const resp = await usersStore.registerUser(registerUser, 'register-support')
     isUserLoading.value = false
     if (!!resp) {
       toast.add({

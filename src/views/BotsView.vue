@@ -18,8 +18,10 @@
             :loading="isLoading"
           >
             <template #header>
-              <span class="flex flex-row justify-between">
-                <span class="text-2xl font-medium">Боты</span>
+              <span
+                class="flex max-sm:flex-col max-sm:justify-center max-sm:items-center max-sm:gap-2 flex-row justify-between"
+              >
+                <span class="text-2xl max-sm:text-xl font-medium">Боты</span>
                 <div class="pb-4 flex flex-row gap-4">
                   <Button
                     rounded
@@ -43,6 +45,49 @@
             <template #loading>Загружается список ботов. Пожалуйста подождите...</template>
             <template #expansion="{ data }">
               <div class="flex flex-col gap-4">
+                <h2 class="sm:hidden text-lg font-bold">Описание</h2>
+                <span class="sm:hidden">{{ data.description }}</span>
+                <h2 class="sm:hidden text-lg font-bold">Действия</h2>
+                <div class="sm:hidden">
+                  <ButtonGroup>
+                    <Button
+                      v-tooltip="'Настроить бота'"
+                      icon="pi pi-cog"
+                      :disabled="!authStore.can('do_update:bots_feature')"
+                      @click="updateBot(data)"
+                      severity="secondary"
+                      variant="text"
+                    />
+                    <Button
+                      v-tooltip="'Запустить бота'"
+                      icon="pi pi-play"
+                      :disabled="
+                        !authStore.can('do_update:bots_feature') || data.state === 'running'
+                      "
+                      @click="runBot(data)"
+                      severity="success"
+                      variant="text"
+                    />
+                    <Button
+                      v-tooltip="'Остановить бота'"
+                      icon="pi pi-pause"
+                      :disabled="
+                        !authStore.can('do_update:bots_feature') || data.state === 'stopped'
+                      "
+                      @click="stopBot(data)"
+                      severity="warn"
+                      variant="text"
+                    />
+                    <Button
+                      v-tooltip="'Удалить бота'"
+                      icon="pi pi-trash"
+                      :disabled="!authStore.can('do_delete:bots_feature')"
+                      @click="deleteBot(data)"
+                      severity="danger"
+                      variant="text"
+                    />
+                  </ButtonGroup>
+                </div>
                 <IftaLabel class="w-full">
                   <InputText
                     :model-value="
@@ -69,7 +114,7 @@
             <Column
               field="description"
               header="Описание"
-              class="max-w-16 truncate"
+              class="max-sm:hidden max-w-16 truncate"
               style="width: 40%"
             >
             </Column>
@@ -82,7 +127,7 @@
                 />
               </template>
             </Column>
-            <Column class="!text-end" style="width: 10%">
+            <Column class="max-sm:hidden" style="width: 10%">
               <template #body="{ data }">
                 <ButtonGroup>
                   <Button

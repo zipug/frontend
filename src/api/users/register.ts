@@ -2,8 +2,6 @@ import { USERS_PATH } from '@/constants/api.ts'
 import { api } from '@/api/client.ts'
 import type { LoginResponse } from '@/api/users/login.ts'
 
-const REGISTER_PATH = USERS_PATH + 'register'
-
 export interface RegisterData {
   email: string
   name: string
@@ -12,9 +10,9 @@ export interface RegisterData {
   repeat_password: string
 }
 
-export const userRegister = async (data: RegisterData): Promise<LoginResponse> => {
+export const userRegister = async (data: RegisterData, path: string): Promise<LoginResponse> => {
   try {
-    const response = await api().post<LoginResponse>(REGISTER_PATH, data)
+    const response = await api().post<LoginResponse>(`${USERS_PATH}${path}`, data)
     return response.data
   } catch (error) {
     return {

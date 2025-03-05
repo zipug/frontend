@@ -67,7 +67,7 @@ const onLogin = async (data: LoginData) => {
   onSuccess(resp)
 }
 const onRegister = async (data: RegisterData) => {
-  const resp = await userRegister(data)
+  const resp = await userRegister(data, 'register')
   if (resp.status === 'failed') {
     onError(resp)
     return
