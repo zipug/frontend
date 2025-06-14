@@ -1,4 +1,4 @@
-export const BASE_URL = import.meta.env.VUE_APP_BASE_URL || 'http://localhost:4400/api/v1/'
+export const BASE_URL = import.meta.env.VITE_APP_BASE_URL || 'http://localhost:4400/api/v1/'
 export const USERS_PATH = 'users/'
 export const ROLES_PATH = 'roles/'
 export const REPORTS_PATH = 'reports/'
@@ -8,5 +8,4 @@ export const ARTICLES_PATH = 'articles/'
 export const BOTS_PATH = 'bots/'
 export const PROJECTS_PATH = 'projects/'
 export const CHATS_PATH = 'chats/'
-export const RESOURCES_WS_URL =
-  import.meta.env.VUE_APP_RESOURCES_WS_URL || 'ws://localhost:30080/ws/'
+export const RESOURCES_WS_URL = import.meta.env.VITE_RESOURCES_WS_URL || 'ws://localhost:30080/ws/'
