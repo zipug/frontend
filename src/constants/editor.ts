@@ -79,7 +79,7 @@ export const EDITOR_CONFIG = {
         block: 'block',
       },
       footer: {
-        markdownTotal: 'Кол-во слов',
+        markdownTotal: 'Кол-во символов',
         scrollAuto: 'Синхронизировать превью',
       },
     },

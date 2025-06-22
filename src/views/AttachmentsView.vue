@@ -192,7 +192,7 @@
             </IftaLabel>
             <template #footer>
               <Button
-                label="Отментить"
+                label="Отменить"
                 text
                 severity="primary"
                 @click="isBindDialog = false"
